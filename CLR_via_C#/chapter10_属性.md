@@ -1,4 +1,4 @@
-###1.合理定义属性
+### 1.合理定义属性
 属性不能作为out或ref参数传给方法，而字段可以
 ```
 private String Name {
@@ -7,7 +7,7 @@ set{}
 }
 MethodWithOutParam(out Name); // 编译器报错
 ```
-###2.对象和集合初始化器
+#### 2.对象和集合初始化器
 ```
 Employee e = new Employee(){ Name = "Jeff", Age = 45 };
 ```
