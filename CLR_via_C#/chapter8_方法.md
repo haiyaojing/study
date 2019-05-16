@@ -1,4 +1,4 @@
-#####1.实例构造器
+###1.实例构造器
 类的修饰符为abstract，编译器生成的默认构造器的可访问性是protected，否则就是public
 如果基类没提供无参构造器，派生类必须显示调用一个基类构造器，否则会报错
 如果类的修饰符为static(sealed和abstract，静态类在元数据中是抽象密封类)，编译器不会生成	
@@ -18,7 +18,7 @@ public SomeValType(int x) {
 }
 ```
 
-#####2.类型构造器
+###2.类型构造器
 类默认没有定义类型构造器，如果定义也只能定义一个，并且类型构造器永远没有参数
 ```
 internal sealed class SomeRefType {
@@ -31,7 +31,7 @@ internal sealed class SomeRefType {
 虽然能在值类型中定义类型构造器，但永远不要这么做，有时CLR并不会给与执行
 类型构造器只能访问类型的静态字段，并且它的常规用途就是初始化这些字段。
 
-#####3.操作符重载
+###3.操作符重载
 CLR规范要求操作符重载方法必须是public和static
 C#要求操作符重载方法中至少一个参数类型与当前定义这个方法的类型相同
 ```
@@ -39,7 +39,7 @@ public class Complex {
     public static Complex operator+(Complex c1, Complex c2){...}
 }
 ```
-#####4.转换操作符重载
+###4.转换操作符重载
 ```
 public sealed class Rational {
     public Rational(int num) { ... } // 由一个int32构造一个Rational
@@ -56,7 +56,7 @@ public sealed class Rational {
 implicit关键字告诉编译器为了生成代码来调用方法，不需要在源代码中间进行显式转型
 explicit关键字告诉编译器只有在发现了显式转型时，才调用方法
 
-#####5.扩展方法
+###5.扩展方法
 1. C#只支持扩展方法，不支持扩展属性、扩展事件、扩展操作符等
 2. 扩展方法必须在非泛型的静态类中声明
 3. C#编译器在静态类中查找扩展方法时，要求静态类本身必须具有文件作用域，否则可能会提
@@ -93,7 +93,7 @@ action.InvokeAndCatch<NullReferenceException>(null);
 
 C#编译器允许创建委托来引用一个对象上的扩展方法
 
-#####6.分部方法
+###6.分部方法
 1. 他们只能在分布类或结构中声明
 2. 分部方法的返回类型始终是void，任何参数都不能用out修饰符来标记(运行期间可能不存在)
 3. 分部方法的声明和实现必须具有完全一致的签名

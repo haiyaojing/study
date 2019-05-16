@@ -1,4 +1,4 @@
-#####1.异常
+###1.异常
 ```
 catch(Exception e) {
     throw e; //CLR认为这个是异常的起点，FxCop报错
@@ -7,7 +7,7 @@ catch(Exception e) {
     throw; //不影响CLR对异常起点的认知，FxCop不在报错
 }
 ```
-#####2.finally	
+###2.finally	
 无论线程抛出什么类型的异常，finally块中的代码都会执行。应该先用finally块清理那些已经成功
 的启动的操作，再返回至调用者或者执行finally块之后的代码，另外还通常利用finally块显式释放对象以免资源泄露
 

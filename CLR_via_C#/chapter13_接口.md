@@ -1,4 +1,4 @@
-#####1.C#编译器要求将实现接口的方法标记为public。CLR要求将接口方法标记为virtual
+###1.C#编译器要求将实现接口的方法标记为public。CLR要求将接口方法标记为virtual
 小例子
 ```
 Base b = new Base();
@@ -14,7 +14,7 @@ b.Dispose(); // base's Dispose
 ((IDisposable)b).Dispose(); // Derived's Dispose
 ```
 
-#####2.实现多个具有相同方法名和签名的接口
+###2.实现多个具有相同方法名和签名的接口
 必须使用“显示接口方法实现”来实现这个类型的成员
 ```
 public interface IWindow {
@@ -34,7 +34,7 @@ class Test : IWindow, IRrestaurant {
 ```
 ((IWindow)mp).GetMenu()
 ```
-#####3.设计：基类还是接口
+###3.设计：基类还是接口
 IS-A对比CAN-DO关系
 类型只能继承一个实现
 1. 易用性 从基类派生的新类型通常比实现接口的所有方法要容易得多
