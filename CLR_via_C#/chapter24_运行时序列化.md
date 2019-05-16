@@ -3,12 +3,12 @@
 
 SerializableAttribute这个定制特性智能应用与引用类型、值类型、枚举类型和委托类型。枚举和委托类型总是可序列化的，所以不用显式应用该特性。SerializableAttribute不会被派生类型继承。
 NorSerializedAttribute定制特性指出类型中不应序列化的字段。
-
+```
 OnSerializedAttribute
 OnDeserializedAttribute
 OnSerializingAttribute
 OnDeserializingAttribute
-
+```
 序列化一组对象时，格式化器首先调用对象标记了OnSerializing特性的所有方法，然后序列化对象的所有字段。最后调用对象标记了OnSerialized特性的所有方法
 
 OptionalFieldAttribute特性，类型中新加的每个字段都要引用该特性，格式化器看到这个特性应用于一个字段时，不会因为流中的数据不包含这个字段而抛出SerializationException
@@ -54,6 +54,7 @@ public interface ISerializable {
 }
 ```
 其他接口可能调用此方法，并传入损坏的数据，可以给此方法添加一下特性
+```
 [SecurityPermissionAttribute(SecurityAction.Demand, SerializationFormatter = true)]
-
+```
 格式化器序列化对象图会检查每个对象，如果实现了ISerializable接口，就会忽略所有定制特性，改为构造新的System.Runtim.Serialization.SerializationInfo对象
