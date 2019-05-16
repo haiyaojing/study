@@ -11,7 +11,7 @@ MethodWithOutParam(out Name); // 编译器报错
 ```
 Employee e = new Employee(){ Name = "Jeff", Age = 45 };
 ```
-###3.匿名类型
+##### 3.匿名类型
 ```
 var o1 = new {Name = "Jeff", Year = 1993};
 
