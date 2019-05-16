@@ -1,4 +1,4 @@
-### 1.序列化
+#### 1.序列化
 序列化是将对象或对象图转换成字节流的过程。反序列化正好相反。
 
 SerializableAttribute这个定制特性智能应用与引用类型、值类型、枚举类型和委托类型。枚举和委托类型总是可序列化的，所以不用显式应用该特性。SerializableAttribute不会被派生类型继承。
@@ -13,7 +13,7 @@ OnDeserializingAttribute
 
 OptionalFieldAttribute特性，类型中新加的每个字段都要引用该特性，格式化器看到这个特性应用于一个字段时，不会因为流中的数据不包含这个字段而抛出SerializationException
 
-### 2.格式化器序列化类型实例
+#### 2.格式化器序列化类型实例
 为了简化格式化器的操作，FCL在System.Runtime.Serialization命名空间提供了一个FormatterServices类型。该类型只包含静态方法，而且不能被实例化。
 序列化
 1、格式化器调用FormatterServices的GetSerializableMembers方法：
@@ -45,7 +45,7 @@ public static Object PopulateObjectMembers(Object obj, MemberInfo[] members, Obj
 ```
 这个方法遍历数组，将每个字段初始化为对应的值，至此，对象彻底被反序列化了。
 
-### 3.控制序列化/反序列化的数据
+#### 3.控制序列化/反序列化的数据
 前面的特性不能提供想要的全部控制。
 格式化器内部使用的是反射，反射较慢，为了对序列化/反序列化进行完全的控制，并避免使用反射，可使接口实现System.Runtime.Serialization.ISerializable接口
 ```

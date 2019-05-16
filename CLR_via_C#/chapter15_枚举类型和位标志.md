@@ -1,4 +1,4 @@
-###1.枚举类型
+#### 1.枚举类型
 枚举类型是强类型的
 枚举类型是值类型（不能定义任何方法、属性和事件的特殊值类型），可通过扩展方法模拟添加
 方法
@@ -8,9 +8,9 @@
 此方法比较慢，因为在内部使用了反射
 Enum类定义了一个HasFlag方法
 尽量避免使用HasFlag方法，由于它获取Enum类型的参数，所以传给它的值都必须装箱
-###2.位标志
+#### 2.位标志
 
-###3.向枚举类型添加方法
+#### 3.向枚举类型添加方法
 ```
 static class FileAttributesExtensionMethods {
    public static Boolean IsSet(this FileAttributes flags, FileAttributes flagToTest) {}
