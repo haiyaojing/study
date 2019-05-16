@@ -28,13 +28,13 @@ WintellectWidget widget = new WintellectWidget();
 
 #### 5.运行时的相互关系
 JIT编译器将IL代码转换成本机CPU指令时，会确认IL代码内部引用的所有类型的所有程序集已经加载，然后利用程序集的元数据，CLR提取与这些类型有关的信息创建一些数据结构来表示类型本身。
-![](../Pictures/CLR_via_C_Sharp/04_01.png)
+![04-01](../Pictures/CLR_via_C_Sharp/04_01.png)
 
 当CLr确认方法需要的所有类型对象都已创建，M3的代码已经编译之后，就允许线程执行M3的本机代码。代码执行前必须在线程栈中为局部变量分配内存并自动将局部变量初始化为null或0。
-![](../Pictures/CLR_via_C_Sharp/04_02.png)
+![04-02](../Pictures/CLR_via_C_Sharp/04_02.png)
 调用虚实例方法时，JIT编译器要在方法中生成一些额外代码:方法每次调用都会执行这些代码，这些代码首先检查发出调用的变量，并跟随地址来到发出调用的对象，然后代码检查对象内部的“类型对象指针”成员，该成员指向对象的实际类型。
 
 #### 6.类型对象本质上也是对象
 CLR开始在一个进程中运行时，会立即为MSCorLib.dll中定义的System.Type类型创建一个特殊的类型对象。
 System.Type类型对象本身也是对象，“类型对象指针”指向它自己。
-![](../Pictures/CLR_via_C_Sharp/04_03.png)
+![04-03](../Pictures/CLR_via_C_Sharp/04_03.png)

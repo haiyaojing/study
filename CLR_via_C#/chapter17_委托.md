@@ -12,6 +12,7 @@
 ```
 delegate void Feedback(Int32 value);
 ```
+![17-01](../Pictures/CLR_via_C_Sharp/17_01.png)
 所有委托类型都派生自MulticastDelegate
 _target（System.Object） 当委托对象包装一个静态方法时，这个字段为null。当委托对象包装一个实例方法时，这个字段引用的是回调方法要操作的对象
 _methodPtr(System.IntPtr) 一个内部的整数值，CLR用它标记要回调的方法
@@ -23,7 +24,7 @@ Feedback fbStatic = new Feedback(Program.FeedbackToConsole);
 Feedback fbInstance = new Feedback(new Program().FeedbackToFile);
 ```
 fbStatic、fbInstance变量将引用两个独立的、初始化好的Feedback委托对象
-
+![17-02](../Pictures/CLR_via_C_Sharp/17_02.png)
 ```
 Delegate.Combine
 Delegate.Remove
@@ -49,6 +50,7 @@ public abstract class MulticastDelegate : Delegate {
 3. 局部变量不需要手动包装到类中即可传递给回调方法
 
 推荐：一般行数大于3行的不使用lambda表达式
+![17-03](../Pictures/CLR_via_C_Sharp/17_03.png)
 
 #### 6.委托和反射
 编码时必须知道回调方法需要多少个参数，以及参数的具体类型

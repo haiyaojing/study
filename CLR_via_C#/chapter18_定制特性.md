@@ -20,7 +20,7 @@ ModuleDef
 
 应用特性时，C#允许用一个前缀明确指定特性要应用于的目标元素，有时也可以省略前缀
 以下是必须的
-
+![](../Pictures/CLR_via_C_Sharp/18_01.png)
 C#允许省略特性的Attribute后缀以减少打字量,许多源代码都是[DllImport(...)]而不是
 [DllImportAttribute(...)]
 
@@ -33,4 +33,4 @@ DllImportAttribute类构造器接受一个String参数，构造器的参数称�
 
 还可以将多个特性应用于一个目标元素
 如果特性不获取参数，可将多个特性整合在一起
-
+![](../Pictures/CLR_via_C_Sharp/18_02.png)

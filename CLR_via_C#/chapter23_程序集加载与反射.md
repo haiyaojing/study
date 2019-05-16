@@ -3,7 +3,7 @@ JIT编译器将方法IL代码编译成本机代码时，会查看IL代码中引�
 在运行时，JIT编译器利用程序集的TypeRef和AssemblyRef元数据表来确定哪个程序集定义了所引用的类型
 在AssemblyRef元数据表的记录项中，包含了构成程序集强名称的各个部分
 JIT获取这些部分——包括名称。版本、语言文化和公钥标记——并把它们连接成一个字符串。然后JIT尝试将于该标识匹配的程序集加载到AppDomain中。如果加载的是弱命名的程序集，标识只包含程序集的名称（无版本、语言文化和公钥）
-
+![23-01](../Pictures/CLR_via_C_Sharp/23_01.png)
 Assembly.Load导致CLR向程序集应用一个版本绑定重定向策略，并在GAC中查找程序集。没找到就接着去应用程序基目录、私有路径子目录和codebase位置查找。如果是弱命名程序集，不会应用重定向策略也不会去GAC查找
 大多数动态可扩展应用程序中，Assembly的Load方法是将程序集加载到AppDomain的首选方式
 
@@ -20,7 +20,7 @@ Assembly.LoadFile 这个方法可从任意路径加载程序集，并且可以�
 通过LoadFile加载程序集时，CLR不会自动解析任何依赖性问题，如果更新了程序集，代码必须向AppDomain的AssemblyResolve事件等级，并让事件回调方法显示地加载任何依赖性的程序集
 
 Assembly.ReflectionOnlyLoadFrom和Assembly.ReflectionOnlyLoad（较为少见） 用于工具只想通过反射分析程序集的元数据，而其中代码都不会执行（试图执行代码会抛出异常）
-
+![23-02](../Pictures/CLR_via_C_Sharp/23_02.png)
 ReflectionOnlyLoadFrom方法加载由路径指定的文件：文件的强名称标识不会获取，也不会在GAC和其他位置搜索文件
 ReflectionOnlyLoad会在GAC、应用程序基目录、私有路径和codebase位置查找搜索（不会应用版本控制策略，指定什么版本就是什么版本。可通过AppDomain的APplyPolicy方法控制）
 利用反射来分析程序集时，代码经常需要向AppDomain的ReflectionOnlyAssemblyResolve事件注册一个回调方法，以便手动加载任何引用的程序集。回调被调用时，必须调用Assembly的ReflectionOnlyLoadFrom或ReflectionOnlyLoad方法来显式加载引用的程序集并返回对该程序集的引用
@@ -46,7 +46,7 @@ VS中可对添加的每个DLL，将它的“生成操作”更改为“嵌入的
 #### 4.反射
 Assembly的ExportedTypes属性：显示其中定义的所有公开导出的类型
 调用System.Reflection.IntrospectionExtensions的GetTypeInfo扩展方法将Type对象转换成TypeInfo对象
-
+![23-03](../Pictures/CLR_via_C_Sharp/23_03.png)
 获取TypeInfo对象会强迫CLR确保已加载类型的定义程序集，从而对类型进行全面解析。
 
 #### 5.构造类型的实例
@@ -67,7 +67,7 @@ Object o = Activator.CreateInstance(closedType);
 ```
 
 #### 5.发现类型的成员
-
+![23-04](../Pictures/CLR_via_C_Sharp/23_04.png)
 利用反射来访问成员，三种方式
 1. 直接获取字段等
 ```

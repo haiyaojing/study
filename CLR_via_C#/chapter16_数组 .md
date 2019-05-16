@@ -24,7 +24,7 @@ System.Array类型公开了很多用于数组处理的心态方法，这些方�
 
 #### 4.所有数组都隐式实现IEnumerable、ICollection和IList
 创建一维0基数组类型时，CLR自动使数组类型实现IEnumerable<T>，ICollection<T>和IList<T>，同时还为数组类型的所有基类实现这三个接口，只要他们是引用类型，下面的层次结构对此做出了澄清
-
+![16-01](../Pictures/CLR_via_C_Sharp/16_01.png)
 这些都由CLR自动实现
 
 如果数组包含值类型的元素，数组类型不回位元素的基类型实现接口

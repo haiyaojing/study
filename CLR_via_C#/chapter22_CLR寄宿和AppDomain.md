@@ -19,6 +19,7 @@ AppDomian是为了提供隔离而设计的
 2. AppDomain可以卸载
 3. AppDomian可以单独保护
 4. AppDomain可以单独配置
+![22-01](../Pictures/CLR_via_C_Sharp/22_01.png)
 
 两个AppDomain的Loader堆会为相同的类型分别分配一个类型对象，类型对象的内存不会由两个AppDomain贡献，方法的IL代码进行JIT编译，生成的本机代码也是单独与每个AppDomain关联的
 
@@ -96,7 +97,7 @@ CLR可以得体的（gracefully）或粗鲁的（rudely）终止线程或AppDoma
 
 #### 9.宿主拿回它的线程
 比如存储过程的代码进入死循环怎么办，数据库服务器把它的一个线程派发给存储过程代码，但这个线程不返回
-
+![22-02](../Pictures/CLR_via_C_Sharp/22_02.png)
 Thread.Abort方法是异步的，此方法设置目标线程的AbortRequested标志后立即返回。
 运行时检测到该标志时，尝试将该线程弄到一个安全地点（如果运行时认为可能安全停止线程正在做的事，就说线程在安全地点，像线程在执行类型的构造器、catch块、finally块中的代码等，就不在安全地点）
 
