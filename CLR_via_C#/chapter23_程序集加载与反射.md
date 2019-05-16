@@ -1,4 +1,4 @@
-1.程序集加载
+#####1.程序集加载
 JIT编译器将方法IL代码编译成本机代码时，会查看IL代码中引用了那些类型。
 在运行时，JIT编译器利用程序集的TypeRef和AssemblyRef元数据表来确定哪个程序集定义了所引用的类型
 在AssemblyRef元数据表的记录项中，包含了构成程序集强名称的各个部分
@@ -8,10 +8,10 @@ Assembly.Load导致CLR向程序集应用一个版本绑定重定向策略，并�
 大多数动态可扩展应用程序中，Assembly的Load方法是将程序集加载到AppDomain的首选方式
 
 Assembly.LoadFrom方法加载指定了路径名的程序集
-LoadFrom流程
-1、调用System.Reflection.AssemblyName类的静态GetAssemblyName方法。该该方法打开指定的文件，找到AssemblyRef元数据表的记录项，提取程序集标识信息，然后一个AssemblyName对象的形式返回这些信息（文件同时会关闭）
-2、调用Assembly的Load方法，将AssemblyName对象传给它
-3、CLR引用版本绑定重定向策略，并在各个位置查找匹配的程序集。找到后加载并返回
+**LoadFrom流程**
+1. 调用System.Reflection.AssemblyName类的静态GetAssemblyName方法。该该方法打开指定的文件，找到AssemblyRef元数据表的记录项，提取程序集标识信息，然后一个AssemblyName对象的形式返回这些信息（文件同时会关闭）
+2. 调用Assembly的Load方法，将AssemblyName对象传给它
+3. CLR引用版本绑定重定向策略，并在各个位置查找匹配的程序集。找到后加载并返回
 
 LoadFrom方法允许传递一个URL作为实参（传递一个url，并且要求联网状态，CLR会下载安装到用户的缓存目录）
 一个机器可能存在多个具有相同标识的程序集，LoadFrom会在内部调用Load方法，所有CLR可能不会加载你指定的文件
@@ -29,57 +29,64 @@ CLR不提供单独卸载程序集的能力，卸载程序集必须卸载包含�
 VS中可对添加的每个DLL，将它的“生成操作”更改为“嵌入的资源”，C#编译器会把DLL文件嵌入EXE文件中，以后只需要部署这个EXE文件
 在运行时，CLR会找不到依赖的DLL程序集。可以在程序初始化时，向AppDomain的ResolveAssembly事件登记一个回调方法
 
-2.利用反射构建动态可扩展应用程序
+#####2.利用反射构建动态可扩展应用程序
 元数据是用一系列表来存储的。生成程序集或模块时，编译器会创建一个类型定义表、一个字段定义表、一个方法定义表以及其他表。
 利用System.Reflection命名空间中包含的类型，可以代码反射这些元数据表。实际上这个命名空间中的类型为程序集或模块中包含的元数据提供了一个对象模型。
 利用对象模型中的类型，可以枚举类型定义元数据表中的所有类型，而针对每个类型都可获取它的基类型、它实现的接口以及类型关联的标志。利用该命名空间中的其他类型，还可解析对应元数据表来查询类型的字段、方法、属性和时间。还可发现特性。甚至允许判断引用的程序集，返回一个方法IL字节流。
 
-3.反射的性能
-缺点：
-1、无法保证类型安全性，严重依赖字符串
-2、反射速度慢。反射时，类型及成员的名称在编译时位置；扫描程序集的元数据时，反射机制就会不停的执行字符串搜索，而且字符串搜索不区分大小写
+#####3.反射的性能
+**缺点：**
+1. 无法保证类型安全性，严重依赖字符串
+2. 反射速度慢。反射时，类型及成员的名称在编译时位置；扫描程序集的元数据时，反射机制就会不停的执行字符串搜索，而且字符串搜索不区分大小写
 应该避免利用反射来访问字段或调用方法/属性。应该用以下方式来动态发现和构造类型实例
-1、让类型从编译时已知的基类型派生。在运行时构造派生类的实例，将它的引用放到基类型的变量中，在调用基类型的虚方法
-2、让类型 实现编译时已知的接口。...
+   
+    1. 让类型从编译时已知的基类型派生。在运行时构造派生类的实例，将它的引用放到基类型的变量中，在调用基类型的虚方法
+    2. 让类型 实现编译时已知的接口。...
 
-4.反射
+#####4.反射
 Assembly的ExportedTypes属性：显示其中定义的所有公开导出的类型
 调用System.Reflection.IntrospectionExtensions的GetTypeInfo扩展方法将Type对象转换成TypeInfo对象
 
 获取TypeInfo对象会强迫CLR确保已加载类型的定义程序集，从而对类型进行全面解析。
 
-5.构造类型的实例
+#####5.构造类型的实例
 获得对Type派生对象的引用之后，就可以构造实例了。FCL提供了以下几个机制
-1、System.Activator的CreateInstance方法
-2、System.Activator的CreateInstanceFrom方法
-3、System.AppDomain的方法
-4、System.Reflection.ConstructorInfo的Invoke实例方法
+1. System.Activator的CreateInstance方法
+2. System.Activator的CreateInstanceFrom方法
+3. System.AppDomain的方法
+4. System.Reflection.ConstructorInfo的Invoke实例方法
+
 利用前面的机制可以为除数组和委托之外的所有类型创建对象
 创建数组：Array的静态CreateInstance方法
 创建委托：调用MethodInfo的静态CreateDelegate方法
 构造泛型类型的实例需要先获取对开放类型的引用，然后调用Type的MakeGenericType方法并向其传递一个数组（其中包含作为类型实参使用的类型）。然后，获取返回的Type对象并把它传给上面列出的某个方法
+```
 Type openType = typeof(Dictionary<,>);
 Type closedType = openType.MakeGenericType(typeof(string), typeof(Int32));
 Object o = Activator.CreateInstance(closedType);
+```
 
-5.发现类型的成员
-
+#####5.发现类型的成员
 
 利用反射来访问成员，三种方式
-1、直接获取字段等
+1. 直接获取字段等
+```
 FieldInfo fi = obj.GetType().GetTypeInfo().GetDeclaredField("m_someField");
 fi.SetValue(obj, 33);
+```
 
-2、创建对应方法、属性的委托（不能创建对字段的委托）
+2. 创建对应方法、属性的委托（不能创建对字段的委托）
+```
 MethodInfo mi = obj.GetType().GetTypeInfo().GetDeclaredMethod("someProp");
 var setSomeProp = pi.SetMethod.CreateDelegate<Action<Int32>>(obj);
 setSomeProp(233);
+```
 
-3、dynamic
+3. dynamic
 dynamic obj = Activator.CreateInstance(t, args);
 obj.m_someField = 5;
 
-6.使用绑定句柄减少进程的内存消耗
+#####6.使用绑定句柄减少进程的内存消耗
 缓存类型或类型成员，但其派生对象需要大量内存，可能会有负面效果
 可以使用运行时句柄代替对象以减少工作集（占用的内存）
 FCL定义了三个运行时句柄RuntimeTypeHandle,RuntimeMethodHandle,RuntimeFieldHandle，三个都是值类型，都只包含一个IntPtr字段，IntPtr是一个句柄，引用了AppDomain的Loader堆中的一个类型、字段或方法

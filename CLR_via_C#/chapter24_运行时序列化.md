@@ -17,10 +17,14 @@ OptionalFieldAttribute特性，类型中新加的每个字段都要引用该特�
 为了简化格式化器的操作，FCL在System.Runtime.Serialization命名空间提供了一个FormatterServices类型。该类型只包含静态方法，而且不能被实例化。
 序列化
 1、格式化器调用FormatterServices的GetSerializableMembers方法：
+```
 public static MemberInfo[] GetSerializableMembers(Type type, StreammingContext context);
+```
 该方法利用反射获取类型的public和private实例字段。
 2、对象被序列化，MemberInfo对象数组传给FormatterServices的静态方法GetObjectData
+```
 public static Object[] GetObjectData(Object obj, MemberInfo[] members);
+```
 3、格式化器将程序集标识和类型的完整名称写入流中
 4、格式化器遍历两个数组中的元素，将每个成员的名称和值写入流中
 
@@ -29,20 +33,26 @@ public static Object[] GetObjectData(Object obj, MemberInfo[] members);
 public static Type GetTypeFromAssembly(Assembly assem, String name);
 返回Type对象代表反序列化的哪个对象的类型
 2、格式化器调用FormatterServices的GetUninitalizedObject方法
+```
 public static Object GetUnitializedObject(Type type);
+```
 为一个新对象分配内存，但不调用构造器。所有直接都被初始化为null或0
 3、格式化器构造版并初始化一个MemberInfo数组。也是调用前面的GetSerializableMembers方法。这个方法返回序列化好、现在需要反序列化的一组字段
 4、格式化器根据流中包含的数据创建并初始化一个Object数组
 5、将分配对象、MemberInfo数组以及冰心Object数组（其中包含字段值）的引用传给FormatterServices的PopulateObjectMembers方法
+```
 public static Object PopulateObjectMembers(Object obj, MemberInfo[] members, Object[] data);
+```
 这个方法遍历数组，将每个字段初始化为对应的值，至此，对象彻底被反序列化了。
 
 #### 3.控制序列化/反序列化的数据
 前面的特性不能提供想要的全部控制。
 格式化器内部使用的是反射，反射较慢，为了对序列化/反序列化进行完全的控制，并避免使用反射，可使接口实现System.Runtime.Serialization.ISerializable接口
+```
 public interface ISerializable {
-void GetObjectData(SerializationInfo info, StreamingContext context);
+    void GetObjectData(SerializationInfo info, StreamingContext context);
 }
+```
 其他接口可能调用此方法，并传入损坏的数据，可以给此方法添加一下特性
 [SecurityPermissionAttribute(SecurityAction.Demand, SerializationFormatter = true)]
 
