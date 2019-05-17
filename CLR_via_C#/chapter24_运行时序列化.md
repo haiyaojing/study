@@ -169,4 +169,103 @@ StreamingContext 一个非常简单的值类型
 IFormatter接口(同时由BinaryFormatter和SoapFormatter类型实现)定义了StreamContext类型的可读写属性Context。构造格式化器时，格式化器会初始化它的Context属性，将State设为All，并将对额外状态对象的引用置为null
 格式化器构造好后，就可以使用任何StreammingContextStates为标志来构造一个StreamingContext结构，并可选择传递一个对象引用。在调用格式化器的Serialize或Deserialize方法之前只需要将格式化器的Context属性设为这个新的StreamingContext对象
 
-#### 6.类型序列化为不同对象以及对象反序列化为不同对象
+#### 6.序列化代理
+格式化器允许不是"类型实现的一部分"的代码重写该类型"序列化和反序列化对象"的方式。应用程序代码之所以要重写类型的行为，主要是出于以下方面的考虑
+1. 允许开发人员序列化最初没有设计成要序列化的类型
+2. 允许开发人员提供一种方式将类型的一个版本映射到类型的一个不同的版本
+
+序列化代理类型必须实现System.Runtime.Serialization.ISerializationSurrogate接口
+```
+public interface ISerializationSurrogate{
+    void GetObjectData(Object obj, SerializationInfo info, StreammingContext context);
+    Object SetObjectData(Object obj, SerializationInfo info, StreammingContext, context, ISurrogateSelector selector);
+}
+```
+例子，程序含有一些DateTime对象，其中包含用户计算机的本地值。但如果将DateTime对象序列化到流中，同时希望值以国际标准时间序列化。
+```
+internal sealed class UniversalToLocalTimeSerializationSurrogate : ISerializationSurrogate {
+    public void GetObjectData(Object obj, SerializationInfo info, StreammingContext, context) {
+        // 将DateTime从本地时间转换成UTC
+        info.AddValue("Date", ((DateTime)obj)).ToUniversalTime().ToString("u");
+    }
+
+    public Object SetObjectData(Object obj, SerializationInfo info, StreammingContext context) {
+        // 将DateTime从UTC转换成本地时间
+        return DateTime.ParseExact(info.GetValue("Date"), "u", null).ToLocalTIme();
+    }
+}
+```
+以下代码对UniversalToLocalTimeSerializationSurrogate类进行测试
+```
+private static void SerializationSurrogateDemo() {
+    using (var stream = new MemoryStream()) {
+        // 1.构造所需的格式化器
+        IFormatter formatter = new SoapFormatter();
+        // 2.构造一个SurrogateSelector(代理选择器)对象
+        SurrogateSelector ss = new SurrogateSelector();
+        // 3.告诉带你选择器为DateTime使用我们的代码
+        ss.AddSurrogateSelector(typeof(DateTime), formatter.Context, new UniversalToLocalTimeSerializationSurrogate());
+        // 注意：AddSurrogate可多次调用来登记多个代理
+
+        // 4.告诉格式化器使用代理选择器
+
+        // 创建一个DateTime来代表当前机器的本地时间，并序列化
+        DateTime localTime = DateTime.Now;
+        formatter.Serialize(stream, localTime);
+        stream.Position = 0;
+        Console.WriteLine(new StreamReader(stream).ReadToEnd());
+        stream.Position = 0;
+        DateTime afterTime = (DateTime)formatter.Deserialize(stream);
+        Console.WriteLine(afterTime);
+    }
+}
+```
+多个SurrogateSelector对象可链接到一起。例如：一个对象维护一组序列化处理，这些surrogate用于将类型序列化成proxy，以便通过网络传送或者跨AppDomain传送。还可以让另一个维护一组学历恶化处理，这些序列化代理用于将版本1的类型转换成版本2的类型
+
+如果有多个希望格式化器使用的SurrogateSelecotr对象，必须将他们链接到一个链表中。SurrogateSelector类型实现了ISurrogateSelector接口，该接口定义了三个方法，都与链接有关
+```
+public interface ISurrogateSelector {
+    void ChainSelector(ISurrogateSelector selector);
+    ISurrogateSelector GetNextSelector();
+    ISerializationSurrogate GetSurrogate(Type type, StreamingContext context, out ISurrogateSelector selector);
+}
+
+ChainSelector:在当前操作的ISurrogateSelector对象（this对象）之后插入
+GetNextSelector：返回对链表下一个ISurrogateSelector对象的引用
+GEtSUrrogate:在this对象中查找一对Type/StreammingContext。没找到就访问链表的下一个ISurrogateSelector对象，以此类推。返回的ISerializationSurrogate对找到的类型进行序列化/反序列化。
+// ISurrogateSelector 包含匹配项的ISurrogateSelector对象
+```
+#### 7.反序列化对象时重写程序集/类型
+序列化对象时，格式化器输出类型及其定义程序集的全名。反序列化时，格式化器根据这个信息确定要为对象构造并初始化什么类型
+列举情形：
+1. 开发把一个类型实现从一个程序集移动到另一个程序集(像程序集版本号变化)
+2. 服务器对象序列化到发送到客户端的流中。客户端处理流时，可以将对象反序列化为完全不同的类型，该类型的代码知道如何向服务器的对象发出远程方法调用
+3. 开发创建了类型的新版本，想将已序列化的对象反序列化类型的新版本
+```
+System.Runtime.Serialization.SerializationBinder类
+```
+以下假定版本1定义了Ver1的类，程序集的新版本定义了Ver1ToVer2SerializationBinder类和Ver2的类
+```
+class Ver1ToVer2SerializationBinder : SerializationBinder {
+    public override Type BindToType(String assemblyName, String typeName) {
+        // 将任何Ver1对象从版本1反序列化成一个Ver2对象
+
+        // 计算定义Ver1类型的程序集名称
+        AssemblyName assemVer1 = Assembly.GetExecutingAssembly().GetName();
+        assemVer1.Version = new Version(1, 0, 0, 0)
+        // 如果从v1.0.0.0反序列化Ver1对象，就把它转变成一个Ver2对象
+        if (assemblyName == assemVer1.ToString() && typeName == "Ver1")
+            return typeof(Ver2);
+        // 后者就只返回请求的同一个类型
+        return Type.GetType(String.Format("{0}, {1}", typeName, assemblyName));
+    }
+}
+```
+1. 构造好格式化器后，构造Ver1ToVer2SerializationBinder的实例，并设置格式化器的可读/可写属性Binder，让它引用绑定器(binder)对象。
+2. 调用格式化器的Deserialize方法。反序列化期间，格式化器发现已设置了个绑定器，每个对象要序列化时，格式化器都调用绑定器的BindToType方法，向它传递程序集名称以及格式化器想要反序列化的类型
+
+SerializationBinder还可重写BindToName方法，从而序列化对象时更改程序集/类型信息
+```
+public virtual void BindToName(TypeSerializedType, out String assemblyName, out string typeName);
+```
+序列化期间，格式化器调用这个方法，传递它想要序列化的类型。不传就是默认。
