@@ -79,5 +79,46 @@ WinRT组件也遵循自己的类型系统(像CLR一样)。CLR看到一个WinRT�
 2. WinRT流
 3. .NET Framework流之间互操作以及需要在CLR和WinRt API之间传输数据块的时候
 
+#### 5.异步编程
 ![25_04](../Pictures/CLR_via_C_Sharp/25_04.png)
 
+#### 6.WinRT流
+许多.NET Framework类要求操作System.IO.Stream派生类型，包括序列化和LINQ to xml等。只有使用System.IO.WindowsRuntimeStorageExtensions类定义的扩展方法，实现了WinRT IStorageFile或IStorageFolder接口的WinRT对象才能和要求Stream派生类型的.NET Framework类一起使用
+![25_05](../Pictures/CLR_via_C_Sharp/25_05.png)
+
+将WinRT流接口转型为.NET Framework的Stream类型
+
+![25_05](../Pictures/CLR_via_C_Sharp/25_05.png)
+
+.NET Framework提供的"转型"扩展方法不仅仅是执行转型。
+将WinRT流转换成.NET Framework流时，会在托管堆中为WinRT流隐式创建一个缓冲区，结果是大多数操作都向这个缓冲区写入，不需要跨越操作边界，提升了性能。
+
+使用.NET Framework流投射的好处，在同一个WinRT流实例上多次执行一个AsStreamXxx方法，不会创建多个互相没有连接的缓冲区，造成向一个缓冲区写入的数据在另一个那里看不到。.NET Framework的API确保每个流对象都有唯一的适配器实例，所有用户共享一个缓冲区。
+
+可通过AsStreamXxx的重载设置缓冲区大小(默认16kb，设置为0就不会创建缓冲区，降低网络延迟之类的)
+#### 7.在CLR和WinRT之间传输数据块
+要尽量使用之前的框架投射，因为他们的性能不错。
+有时需要在CLR和WinRT组件之间传递原始数据块(raw blocks)。例如WinRT的文件和套接字流组就要求读写原始数据块。另外WinRT的加密组件要对数据块进行加密和解密，位图像素也要用原始数据块来维护。
+.Net Framework获取数据块的方式一般是通过字节数组(Byte[]),或者通过流(MemoryStream)。字节数组和流都不能直接传给WinRT组件。所以WinRT定义了IBuffer接口，实现了该接口的对象代表可传给WinRT API的原始数据块。
+
+```
+namespace Windows.Storage.Streams {
+    public interface IBuffer {
+        UInt32 Capacity { get; }
+        UInt32 Length { get; set; }
+    }
+}
+```
+WinRT没有提供在缓冲区中读写数据的方式，主要由于WinRT类型不能再其元数据中表示指针，因为指针不能很好地映射到部分语言(JavaScript和安全C#代码)。所以IBuffer对象实际只是CLR和WinRT API之间传递内存地址的一种方式。
+
+为了访问内存地址处的直接，需要使用一个名为IBufferByteAccess的内部**COM接口**
+```
+namespace System.Runtime.InteropServices.WindowsRuntime {
+    [Guid("9...")]
+    [InterfaceType(ComInterfaceType.InterfaceIsUnknown)]
+    [ComImport]
+    internal interface IBufferByteAccess {
+        unsafe Byte* Buffer { get; }
+    }
+}
+```
