@@ -212,3 +212,110 @@ Task对象通常抛出一个AggregateException，可查询该异常的InnerExcep
 
 #### 8. 应用程序及其线程处理模型  
 任何线程可在任何时候做它想做的任何事情，但GUI应用程序引入了一个线程处理模型。在这个模型中，UI元素只能由创建它的线程更新。  
+
+ASP.NET引用允许任何线程做它想做的任何事情。  
+线程池线程生成一个异步操作时，它可能由另一个线程池线程完成，该线程将处理异步操作的结果。代表原始客户端执行工作时，语言文化和身份标识信息需要"流向"新的线程池线程。这样一来，代表客户端执行的任何额外的工作才能 使用客户端的语言文化和身份标识信息。  
+
+FCL定义了System.Threading.SynchronizationContext的基类，解决了这些问题。(不需要了解)  
+
+让状态机使用应用程序模型的线程处理模型来恢复，偶尔会带来一些问题。下面是造成WPF应用程序死锁的一个例子  
+```
+private sealed class MyWpfWindow : Window {
+    public MyWpfWindow() { Title = "WPF Window"; }
+
+    protected override void OnActivated(EventArgs e) {
+        // 查询Result属性阻止GUI县城返回；
+        // 线程在等待结果期间阻塞
+        String http = GetHttp().Result(); // 以同步方式获取字符串
+
+        base.OnActivated(e);
+    }
+
+    private async Task<String> GetHttp() {
+        // 发出HTTP请求，让线程从GetHttp返回
+        HttpResponseMessage msg = await new HttpClient().GetAsync("http://Wintellect.com/");
+        // 这里永远执行不到;GUI在等待这个方法结束
+        // 但这个方法结束不了，因为GUI线程在等待它结束
+
+        return await msg.Content.ReadAsStringAsync();
+    }
+}
+```
+由于许多类库代码都要求不依赖于特定的应用程序模型，所以要避免因为使用SynchronizationContext对象而产生的额外开销。此外，类库开发人员要竭尽全力帮助应用程序开发程序开发人员防止死锁。  
+Task和Task<TResult>类提供了一个ConfigureAwait方法  
+```
+public ConfiguredTaskAwaitable ConfigureAwait(Boolean continueOnCapturedContext);
+
+public ConfiguredTaskAwaitable<TResult> ConfigureAwait(Boolean continueOnCapturedContext);
+```
+向方法传递true相当于没调用方法。  
+传递false，await操作符就不查询调用线程的SynchronizationContext对象。当线程池结束Task时会直接完成它，await操作符后面的代码通过线程池线程执行。  
+下面是修改过后的GetHttp方法  
+```
+private async Task<String> GetHttp() {
+    // 发出HTTP请求，让线程从GetHttp返回
+    HttpResponseMessage msg = await new HttpClinet().GetAsync("Http://Wintellect.com").ConfigureAwait(false);
+    // 这里代码能执行到了，因为线程池线程可以自行这里的代码
+    // 而非被迫由GUI线程执行
+
+    return await msg.Context.ReadAsStringAsync().ConfigureAwait(false);
+}
+```
+如上述代码说是，必须将ConfigureAwait(false)应用于等待的每个Task对象，因为本本不知道那个操作要求忽略SynchronizationContext对象，只能要求所有的操作都忽略它。还意味着内福袋吗不能依赖与任何特定的应用程序模型。  
+还可以像下面这样重写GetHttp方法，用一个线程池线程执行所有操作。  
+```
+private Task<String> GetHttp() {
+    return Task.Run(async() => {
+        // 运行一个无SynchronizationConext的线程池线程
+        HttpResponseMessage msg = await new HttpClient().GetAsync("http://Wintellect.com/");
+
+        return await msg.Content.ReadAsStringAsync();
+    });
+}
+```
+此版本中GetHttp不再是异步函数  
+
+#### 9.取消IO操作 
+Windows一般没有提供取消未完成IO操作的途径  
+实现一个WithCancellation扩展方法来扩展Task<TResult>(需要类似的重载版本来扩展Task)  
+```
+private struct Void() {} // 因为没有非泛型的TaskCompletionSource类
+
+private static async Task<TResult> WithCancellation<TResult>(this Task<TResult> originalTask, CancellationToken ct) {
+    // 创建在CancellationToken被取消时完成的一个Task
+    var cancelTask = new TaskCompletionSource<Void>();
+
+    // 一旦CancellationToken被取消，就完成Task
+    using(ct.Register(t => ((TaskCompletionSource<Void>) t).TrySetResult(new Void(), cancelTask)) {
+        // 创建在原始Task或CancellationToken Task完成时都完成的一个Task
+        Task any = await Task.WhenAny(originalTask, cancelTask.Task);
+        if (any == cancelTask.Task) ct.ThrowIfCancellationRequested();
+    }
+
+    // 等待原始任务(以同步方式):若任务失败，等待它并抛出第一个内部异常
+    // 而不是抛出AggregateException
+    return await originalTask;
+}
+
+// 使用方式
+public static async Task GO() {
+    var cts = new CancellationTokenSource(5000);
+    var ct = cts.Token;
+    try {
+        await Task.Delay(10000).WithCancellation(ct);
+        Console.WriteLine("Task Completed");
+    }
+    catch (OperationCanceledException) {
+        Console.WriteLine("Task Canceled");
+    }
+}
+
+```
+#### 10. 有的IO操作必须同步进行
+Win32 API提供了许多IO函数。而许多方法不逊于以异步方式执行IO。比如Win32 CreateFile方法(由FileStream的构造器调用)总是同步执行。
+
+**FileStream特有的问题**
+创建FileStream对象时，可通过FileOptions.AsyncChronous标志指定以同步还是异步方式进行通信(默认同步)  
+仍然可以调用FileStream的ReadAsync方法(表面上异步，实际内部用另一个线程模拟异步行为)  
+
+所以FileOptions.Asynchronous标志和调用方法要配套
