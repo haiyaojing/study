@@ -419,7 +419,7 @@ public abstract class WaitHandle : MarshalByRefObject, IDisposable {
 ```
 public static class Program {
     public static void Main() {
-        using (new Samaphore(0, 1, "SomeUniqueStringIdentifyingMyApp", out createdNew)) {
+        using (new Semaphore(0, 1, "SomeUniqueStringIdentifyingMyApp", out createdNew)) {
             if (createNew) {
                 // 这个线程创建了内核对象，所以肯定没有这个应用程序的其他实例正在运行
             } else {
@@ -476,8 +476,8 @@ SimpleSpinLock 和 SimpleWaitLock的性能截然不同
 信号量是内核维护的Int32变量。信号量为0时，在信号量上等待的线程会阻塞；大于0时解除阻塞。在信号量上等待的线程解除阻塞时，内核自动从信号量的计数中减1。  
 
 ```
-public sealed class Samaphore : WaitHandle {
-    public Samaphore(Int32 initialCount, Int32 maximumCount);
+public sealed class Semaphore : WaitHandle {
+    public Semaphore(Int32 initialCount, Int32 maximumCount);
     public Int32 Release(); //调用Release(1); 返回上一个计数
     public Int32 Release(Int32 releaseCount);
 }
@@ -493,10 +493,10 @@ public sealed class Samaphore : WaitHandle {
 ```
 //允许多个线程并发访问一个资源(如果所有线程以只读方式访问资源，就是安全的)
 public sealed class SimpleWaitLock : IDisposable {
-    private Samaphore m_avalilable;
+    private Semaphore m_avalilable;
 
     public SimpleWaitLock(Int32 maxConcurrent) {
-        m_avalilable = new Samaphore(maxConcurrent, maxConcurrent);
+        m_avalilable = new Semaphore(maxConcurrent, maxConcurrent);
     }
 
     public void Enter() {
